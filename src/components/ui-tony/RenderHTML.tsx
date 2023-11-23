@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 // import "../../app/prism.css";
 
 export default function RenderHTML({}: Props) {
-  const [active, setActive] = useState("code");
+  const [active, setActive] = useState("html");
   const [edit, setEdit] = useState(false);
   const [html, setHtml] = useState(`<html lang="en">
   <head>
@@ -29,7 +29,7 @@ export default function RenderHTML({}: Props) {
 
   useEffect(() => {
     const highlight = async () => {
-      console.log("highlight");
+      // console.log("highlight");
 
       await Prism.highlightAll();
     };
@@ -38,10 +38,10 @@ export default function RenderHTML({}: Props) {
 
   return (
     <div className="flex flex-col  ">
-      <div className="grid grid-cols-2 gap-3 bg-slate-100 p-1 rounded">
+      <div className="grid grid-cols-2 gap-3 bg-slate-100   rounded">
         <button
-          className={cn(" text-black rounded py-2", {
-            "bg-white ": active === "html",
+          className={cn(" text-black rounded px-3 py-2 ", {
+            "bg-violet-400 text-white": active === "html",
           })}
           onClick={() => setActive("html")}
         >
@@ -49,8 +49,8 @@ export default function RenderHTML({}: Props) {
         </button>
 
         <button
-          className={cn(" text-black rounded py-2", {
-            "bg-white ": active === "code",
+          className={cn(" text-black rounded px-3 py-2 ", {
+            "bg-violet-400 text-white": active === "code",
           })}
           onClick={() => setActive("code")}
         >
