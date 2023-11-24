@@ -9,6 +9,8 @@ import "prismjs/themes/prism-tomorrow.css";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
+import CopyButton from "./CopyButton";
 // import "../../app/prism.css";
 
 export default function RenderHTML({}: Props) {
@@ -65,8 +67,9 @@ export default function RenderHTML({}: Props) {
           sandbox="allow-scripts"
         ></iframe>
       ) : (
-        <div className="">
-          <pre>
+        <div>
+          <pre className="relative">
+            <CopyButton html={html} />
             <code className="language-markup">{html}</code>
           </pre>
 
