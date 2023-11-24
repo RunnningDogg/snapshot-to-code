@@ -23,6 +23,18 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Loader } from "lucide-react";
+import { Textarea } from "../ui/textarea";
+import { ChatCompletionStream } from "openai/lib/ChatCompletionStream.mjs";
+import { useImageStore } from "@/store/image";
+import { convertFileToBase64 } from "@/lib/utils";
+
+type Props = {
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  loading: boolean;
+  setImageType: React.Dispatch<React.SetStateAction<"low" | "high">>;
+  setHtml: React.Dispatch<React.SetStateAction<string>>;
+};
+
 // define form schema
 const FormSchema = z.object({
   image_type: z.string({
@@ -32,25 +44,76 @@ const FormSchema = z.object({
     description: "The code type",
     required_error: "Please select a code type",
   }),
+  message: z.string().optional(),
 });
 
-type Props = {
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  loading: boolean;
-  setImageType: React.Dispatch<React.SetStateAction<"low" | "high">>;
-};
-
-export default function CodeForm({ loading, setLoading, setImageType }: Props) {
+export default function CodeForm({
+  loading,
+  setLoading,
+  setImageType,
+  setHtml,
+}: Props) {
   // form
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
   });
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+
+  // zustand
+  const { imageFile } = useImageStore();
+
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    if (!imageFile) {
+      toast.error("Please upload an image");
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      toast.success("File uploaded");
+    try {
+      // 新增表单数据
+      // const formData = new FormData();
+
+      // formData.append("file", imageFile);
+      // console.log(base64_file);
+      // if (data?.message) {
+      //   // message 是可选项
+      //   formData.append("message", data.message);
+      // }
+      const base64_file = await convertFileToBase64(imageFile);
+      console.log(base64_file);
+
+      const body = {
+        file: base64_file,
+        message: data.message,
+      };
+
+      fetch("/api/ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      })
+        .then(async (res) => {
+          // @ts-ignore ReadableStream on different environments can be strange
+          const runner = ChatCompletionStream.fromReadableStream(res.body);
+          runner.on("content", (delta, snapshot) => {
+            console.log(delta);
+            setHtml((prev) => prev + delta);
+          });
+          console.log(await runner.finalChatCompletion(), { depth: null });
+
+          toast.success("File uploaded");
+        })
+        .catch((err) => {
+          toast.error("Error uploading file");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } catch (error) {
+      console.log(error);
+      toast.error("Error uploading file");
       setLoading(false);
-    }, 2000);
+    }
   }
   return (
     <Form {...form}>
@@ -85,8 +148,12 @@ export default function CodeForm({ loading, setLoading, setImageType }: Props) {
               <FormDescription>
                 Low to disable high res model; high to enable high res model
                 Know More on Low/High setting on{" "}
-                <Link href="https://platform.openai.com/docs/guides/vision/low-or-high-fidelity-image-understanding">
-                  OPENAI
+                <Link
+                  target="_blank"
+                  className="font-semibold text-violet-500  hover:text-violet-700 transition duration-200"
+                  href="https://platform.openai.com/docs/guides/vision/low-or-high-fidelity-image-understanding"
+                >
+                  OPENAI Detailed page
                 </Link>
                 .
               </FormDescription>
@@ -114,6 +181,20 @@ export default function CodeForm({ loading, setLoading, setImageType }: Props) {
               </Select>
               <FormDescription>
                 Select the code type you want to generate
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="message"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Prompt</FormLabel>
+              <Textarea onChange={field.onChange} />
+              <FormDescription>
+                Provide Optional information to the model
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { Dispatch, SetStateAction, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,14 @@ import { Loader } from "lucide-react";
 import { calculateTokenCost } from "@/lib/utils";
 import FrontSelector from "./FrontSelector";
 import CodeForm from "./CodeForm";
+import { useImageStore } from "@/store/image";
 
-type Props = {};
+type Props = {
+  html: string;
+  setHtml: Dispatch<SetStateAction<string>>;
+};
 
-export default function ImageUploader({}: Props) {
+export default function ImageUploader({ html, setHtml }: Props) {
   /**
    * state
    */
@@ -21,6 +25,10 @@ export default function ImageUploader({}: Props) {
   const [loading, setLoading] = useState(false);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [imageType, setImageType] = useState<"low" | "high">("low");
+
+  // zustand
+  const { setImageFile, clearImageFile } = useImageStore();
+
   /**
    * handler
    */
@@ -29,6 +37,7 @@ export default function ImageUploader({}: Props) {
 
     if (file) {
       // console.log(file);
+      setImageFile(file);
       const imageUrl = URL.createObjectURL(file);
       setPreviewUrl(imageUrl);
     }
@@ -39,6 +48,7 @@ export default function ImageUploader({}: Props) {
     // clear file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+      clearImageFile();
     }
   };
 
@@ -104,6 +114,7 @@ export default function ImageUploader({}: Props) {
             loading={loading}
             setLoading={setLoading}
             setImageType={setImageType}
+            setHtml={setHtml}
           />
         </div>
       )}

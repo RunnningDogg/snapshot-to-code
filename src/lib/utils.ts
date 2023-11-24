@@ -47,3 +47,26 @@ export function calculateTokenCost(
 
   return totalCost;
 }
+
+ 
+/**
+ * base64 by gpt
+ */
+export function convertFileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      // 当读取完成后，result属性包含了Base64格式的数据
+      const base64String = reader.result as string;
+      resolve(base64String);
+    };
+
+    reader.onerror = (error) => {
+      reject(error);
+    };
+
+    // 读取文件内容，结果用Base64格式表示
+    reader.readAsDataURL(file);
+  });
+}
